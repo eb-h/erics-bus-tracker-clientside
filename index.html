@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eric's Bus Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --main: #88aaee;
+            --main-foreground: #000;
+            --secondary: #ffd93d;
+            --border: #000;
+            --shadow-color: #000;
+            --bg: #f5f5f5;
+            --card-bg: #fff;
+            --error: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
+            background-color: var(--bg);
+            background-image:
+                linear-gradient(to right, #80808033 1px, transparent 1px),
+                linear-gradient(to bottom, #80808033 1px, transparent 1px);
+            background-size: 70px 70px;
+            padding: 2rem;
+            color: var(--main-foreground);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .add-stop-section {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 6px 6px 0px var(--shadow-color);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--shadow-color);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: var(--main);
+            color: var(--main-foreground);
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px var(--shadow-color);
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        button:active {
+            transform: translate(5px, 5px);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: var(--card-bg);
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--shadow-color);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab:hover {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        .tab.active {
+            background: var(--secondary);
+        }
+
+        .tab .remove-btn {
+            margin-left: 0.5rem;
+            color: var(--error);
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 0.25rem;
+        }
+
+        .tab .remove-btn:hover {
+            color: #cc0000;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .bus-list {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 6px 6px 0px var(--shadow-color);
+        }
+
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .bus-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            background: #fff;
+            box-shadow: 3px 3px 0px var(--shadow-color);
+        }
+
+        .bus-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .bus-identifier {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .arrival-time {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.25rem;
+        }
+
+        .error {
+            color: var(--error);
+            padding: 1rem;
+            border: 2px solid var(--error);
+            border-radius: 6px;
+            background: #ffe0e0;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .refresh-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .last-refreshed {
+            font-size: 0.875rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .refresh-btn {
+            background: var(--secondary);
+        }
+
+        .button-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .help-link {
+            color: var(--main-foreground);
+            text-decoration: underline;
+            font-size: 0.875rem;
+            font-weight: normal;
+            font-family: Arial, sans-serif;
+        }
+
+        .help-link:hover {
+            color: var(--main);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .about-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .about-content {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 6px 6px 0px var(--shadow-color);
+            line-height: 1.6;
+        }
+
+        .about-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-content p {
+            margin-bottom: 1rem;
+            font-family: Arial, sans-serif;
+            font-weight: normal;
+        }
+
+        .back-btn {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 Eric's Bus Tracker</h1>
+            <button class="about-btn" onclick="showAbout()">About</button>
+        </div>
+
+        <div id="mainPage" class="page active">
+        <div class="add-stop-section">
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <label for="stopId">Bus Stop ID</label>
+                    <input type="number" id="stopId" placeholder="Enter stop ID">
+                </div>
+                <div class="input-wrapper">
+                    <label for="alias">Alias</label>
+                    <input type="text" id="alias" placeholder="Enter alias (e.g., Home)">
+                </div>
+            </div>
+            <div class="button-row">
+                <button onclick="addStop()">Add Stop</button>
+                <a href="https://www.transport.act.gov.au/getting-around/find-a-stop-or-map" target="_blank" class="help-link">Don't know your Stop ID?</a>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabs"></div>
+
+        <div id="content"></div>
+        </div>
+
+        <div id="aboutPage" class="page">
+            <button class="back-btn" onclick="showMain()">← Back to Tracker</button>
+            <div class="about-content">
+                <h2>About Eric's Bus Tracker</h2>
+                <p>Most public transport apps assume you are traveling somewhere for the first time, once. This website assumes you have at most a few particular public transport stops that you care about, and you already know what bus you want to catch.</p>
+                <p>Developed by Eric with <a href="https://claude.ai">Claude</a>. If you like it, let me know!</p>
+                <p>Find me on <a href="https://github.com/eb-h" target="_blank">GitHub</a> or <a href="https://x.com/Quickly_Rainbow" target="_blank">Twitter</a>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stops = [];
+        let activeStopId = null;
+        let lastRefreshTime = null;
+
+        function loadStops() {
+            const saved = localStorage.getItem('busStops');
+            if (saved) {
+                stops = JSON.parse(saved);
+                if (stops.length > 0) {
+                    activeStopId = stops[0].id;
+                }
+            }
+            renderTabs();
+            updateBusData();
+        }
+
+        function saveStops() {
+            localStorage.setItem('busStops', JSON.stringify(stops));
+        }
+
+        function addStop() {
+            const stopIdInput = document.getElementById('stopId');
+            const aliasInput = document.getElementById('alias');
+
+            const stopId = stopIdInput.value.trim();
+            const alias = aliasInput.value.trim();
+
+            if (!stopId) {
+                alert('Please enter a Bus Stop ID');
+                return;
+            }
+
+            if (stops.find(s => s.id === stopId)) {
+                alert('This stop is already added');
+                return;
+            }
+
+            stops.push({
+                id: stopId,
+                alias: alias || `Stop ${stopId}`
+            });
+
+            if (!activeStopId) {
+                activeStopId = stopId;
+            }
+
+            saveStops();
+            stopIdInput.value = '';
+            aliasInput.value = '';
+            renderTabs();
+            updateBusData();
+        }
+
+        function removeStop(stopId) {
+            if (!confirm('Remove this stop?')) {
+                return;
+            }
+
+            stops = stops.filter(s => s.id !== stopId);
+
+            if (activeStopId === stopId) {
+                activeStopId = stops.length > 0 ? stops[0].id : null;
+            }
+
+            saveStops();
+            renderTabs();
+            updateBusData();
+        }
+
+        function setActiveStop(stopId) {
+            activeStopId = stopId;
+            renderTabs();
+            updateBusData();
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabs');
+
+            if (stops.length === 0) {
+                tabsContainer.innerHTML = '<div class="empty-state">No stops added yet. Add a stop to get started!</div>';
+                document.getElementById('content').innerHTML = '';
+                return;
+            }
+
+            tabsContainer.innerHTML = stops.map(stop => `
+                <div class="tab ${stop.id === activeStopId ? 'active' : ''}" onclick="setActiveStop('${stop.id}')">
+                    ${stop.alias} (${stop.id})
+                    <span class="remove-btn" onclick="event.stopPropagation(); removeStop('${stop.id}')">×</span>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function getRefreshHeader() {
+            const timeText = lastRefreshTime
+                ? `Last refreshed at ${formatTime(lastRefreshTime)}`
+                : 'Not yet refreshed';
+
+            return `
+                <div class="refresh-header">
+                    <span class="last-refreshed">${timeText}</span>
+                    <button class="refresh-btn" onclick="updateBusData()">Refresh</button>
+                </div>
+            `;
+        }
+
+        async function updateBusData() {
+            if (!activeStopId) {
+                return;
+            }
+
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '<div class="bus-list"><div class="loading">Loading bus data...</div></div>';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5001/trip-updates');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                lastRefreshTime = new Date();
+
+                // The API returns data.stops as an object where keys are stop IDs
+                if (!data.stops || typeof data.stops !== 'object') {
+                    throw new Error('API response missing "stops" field');
+                }
+
+                // Get the array of trip updates for this specific stop
+                const stopData = data.stops[activeStopId] || [];
+
+                if (stopData.length === 0) {
+                    contentDiv.innerHTML = `
+                        <div class="bus-list">
+                            ${getRefreshHeader()}
+                            <div class="bus-header">
+                                <div>Route</div>
+                                <div>Arrival Time</div>
+                            </div>
+                            <div class="empty-state">No buses found for this stop</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort by arrival time (soonest first)
+                const sortedData = stopData.sort((a, b) => a.arrival.time - b.arrival.time);
+
+                const busItems = sortedData.map(bus => {
+                    const arrivalTime = new Date(bus.arrival.time * 1000);
+                    const timeDisplay = arrivalTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                        <div class="bus-item">
+                            <div class="bus-identifier">${bus.trip.route_id}</div>
+                            <div class="arrival-time">${timeDisplay}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                contentDiv.innerHTML = `
+                    <div class="bus-list">
+                        ${getRefreshHeader()}
+                        <div class="bus-header">
+                            <div>Route</div>
+                            <div>Arrival Time</div>
+                        </div>
+                        ${busItems}
+                    </div>
+                `;
+
+            } catch (error) {
+                lastRefreshTime = new Date();
+                contentDiv.innerHTML = `
+                    <div class="bus-list">
+                        ${getRefreshHeader()}
+                        <div class="error">Error loading bus data: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function showAbout() {
+            document.getElementById('mainPage').classList.remove('active');
+            document.getElementById('aboutPage').classList.add('active');
+        }
+
+        function showMain() {
+            document.getElementById('aboutPage').classList.remove('active');
+            document.getElementById('mainPage').classList.add('active');
+        }
+
+        loadStops();
+    </script>
+</body>
+</html>
