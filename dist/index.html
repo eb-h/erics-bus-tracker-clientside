@@ -478,7 +478,7 @@
             contentDiv.innerHTML = '<div class="bus-list"><div class="loading">Loading bus data...</div></div>';
 
             try {
-                const response = await fetch('http://127.0.0.1:5001/trip-updates');
+                const response = await fetch('https://eric-bus-tracker-hpbxdmawg0geg7c7.australiaeast-01.azurewebsites.net/api/trip-updates');
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
